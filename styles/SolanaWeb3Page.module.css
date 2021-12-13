@@ -1,0 +1,35 @@
+.center {
+  text-align: center;
+}
+
+.btnLinkSolanaPage {
+  background: #e67e22;
+  margin-right: 10px;
+}
+
+.btnLinkMetamaskPage {
+  background: #e74c3c;
+}
+
+.btnAirdrop {
+  background: #3498db;
+}
+
+.btnAirdrop span {
+  top: 3px;
+  left: 4px;
+}
+
+.loader {
+  animation: spin 2s linear infinite;
+  position: absolute;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans&family=Saira:wght@200&display=swap');
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  font-size: 14px;
+  font-family: 'Saira, DM Sans', sans-serif;
+  box-sizing: border-box;
+}
