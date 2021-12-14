@@ -4,31 +4,81 @@ import Head from 'next/head';
 import Image from 'next/image';
 import styles from '../styles/SolanaWeb3Page.module.css';
 import { Button } from 'components';
-import { Connection, clusterApiUrl, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import {
+  Connection,
+  clusterApiUrl,
+  PublicKey,
+  LAMPORTS_PER_SOL,
+  Transaction,
+  SendOptions,
+} from '@solana/web3.js';
 import spinner from '/public/spinner.svg';
+import { formatAddress } from 'utils/helps';
 
-interface IAccount {
-  keypair: Keypair;
+type PhantomEvent = 'disconnect' | 'connect';
+interface PhantomProvider {
+  publicKey: PublicKey | null;
+  isConnected: boolean | null;
+  signTransaction: (transaction: Transaction) => Promise<Transaction>;
+  signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
+  signAndSendTransaction: (
+    transaction: Transaction,
+    options?: SendOptions,
+  ) => Promise<{ signature: string }>;
+  connect: (opts?: any) => Promise<{ publicKey: PublicKey }>;
+  disconnect: () => Promise<void>;
+  on: (event: PhantomEvent, handler: (args: any) => void) => void;
+  // request: (method: PhantomRequestMethod, params: any) => Promise<unknown>;
 }
 
 const SolanaWeb3Page: NextPage = () => {
-  const [account, setAccount] = useState<IAccount | null>(null);
+  const [account, setAccount] = useState<PhantomProvider | undefined>(undefined);
+  const [provider, setProvider] = useState<PhantomProvider | undefined>(undefined);
   const [balanceOfAccount, setBalanceOfAccount] = useState<number | undefined>(0);
   const [isLoading, setLoading] = useState(false);
 
-  const createConnection = () => {
-    return new Connection(clusterApiUrl('devnet'));
-  };
+  useEffect(() => {
+    const getProvider = (): PhantomProvider | undefined => {
+      if (window && 'solana' in window) {
+        const anyWindow: any = window;
+        const provider = anyWindow.solana;
+        if (provider.isPhantom) {
+          return provider;
+        }
+      }
+      window.open('https://phantom.app/', '_blank');
+    };
 
-  const createAccount = async () => {
-    const keypair = Keypair.generate();
-    setAccount({ keypair });
-    setBalanceOfAccount(0);
+    setProvider(getProvider());
+
+    if (provider) {
+      provider.on('connect', () => {
+        setAccount(provider);
+      });
+
+      provider.on('disconnect', () => {
+        setAccount(undefined);
+      });
+    }
+  }, [provider]);
+
+  useEffect(() => {
+    document.addEventListener('load', () => {
+      setAccount(undefined);
+    });
+
+    return () => {
+      document.removeEventListener('load', () => {});
+    };
+  }, []);
+
+  const connectToWallet = async () => {
+    await provider?.connect();
   };
 
   const getBalance = async (publicKey: PublicKey) => {
     try {
-      const connection = createConnection();
+      const connection = new Connection(clusterApiUrl('devnet'));
       const lamports = await connection.getBalance(publicKey);
       setBalanceOfAccount(lamports / LAMPORTS_PER_SOL);
 
@@ -39,22 +89,23 @@ const SolanaWeb3Page: NextPage = () => {
   };
 
   useEffect(() => {
-    if (account?.keypair) {
-      getBalance(account.keypair.publicKey);
+    if (account?.publicKey) {
+      getBalance(account.publicKey);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account?.keypair]);
+  }, [account]);
 
-  const requestAirdrop = async (publicKey: PublicKey) => {
-    setLoading(true);
+  const requestAirdrop = async (publicKey: PublicKey | null) => {
+    if (publicKey) {
+      setLoading(true);
 
-    const connection = createConnection();
-    const airdropSignature = await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL);
-    await connection.confirmTransaction(airdropSignature);
-    const newBalance = await getBalance(publicKey);
-    setBalanceOfAccount(newBalance);
+      const connection = new Connection(clusterApiUrl('devnet'));
+      const airdropSignature = await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL);
+      await connection.confirmTransaction(airdropSignature);
+      const newBalance = await getBalance(publicKey);
+      setBalanceOfAccount(newBalance);
 
-    setLoading(false);
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,24 +113,32 @@ const SolanaWeb3Page: NextPage = () => {
       <Head>
         <title>Solana-Web3 Demo</title>
       </Head>
-      <div className={styles.container}>
+      <div>
         {!account ? (
-          <Button onClick={createAccount}>Connect Wallet</Button>
+          <Button onClick={connectToWallet}>Connect Wallet</Button>
         ) : (
           <div className={styles.center}>
             <p>Public key</p>
-            <p>{account.keypair.publicKey.toBase58()}</p>
+            <p>{account.publicKey && formatAddress(account.publicKey.toBase58())}</p>
             <br />
             <p>Balance</p>
             <p>{balanceOfAccount} SOL</p>
             <br />
+            <pre>
+              <Button
+                onClick={() => requestAirdrop(account.publicKey)}
+                className={styles.btnAirdrop}>
+                Airdrop
+                {isLoading && (
+                  <Image src={spinner} className={styles.loader} width={15} height={15} alt="" />
+                )}
+              </Button>
+            </pre>
             <Button
-              onClick={() => requestAirdrop(account.keypair.publicKey)}
-              className={styles.btnAirdrop}>
-              Airdrop
-              {isLoading && (
-                <Image src={spinner} className={styles.loader} width={15} height={15} alt="" />
-              )}
+              onClick={async () => {
+                await provider?.disconnect();
+              }}>
+              Disconnect Phantom Wallet
             </Button>
           </div>
         )}
