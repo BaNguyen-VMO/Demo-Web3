@@ -11,6 +11,10 @@
   left: 4px;
 }
 
+.btnSend {
+  background: #f1c40f;
+}
+
 .loader {
   animation: spin 2s linear infinite;
   position: absolute;

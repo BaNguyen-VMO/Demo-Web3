@@ -6,5 +6,5 @@ export const getLibrary: GetLibrary = (provider) => {
 };
 
 export const formatAddress = (address: string, char = 4) => {
-  return `${address.substring(0, char + 2)}...${address.substring(address.length - char)}`;
+  return `${address.substring(0, char)}...${address.substring(address.length - char)}`;
 };

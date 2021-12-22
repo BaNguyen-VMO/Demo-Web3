@@ -11,14 +11,17 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
   SendOptions,
+  SystemProgram,
+  sendAndConfirmTransaction,
 } from '@solana/web3.js';
 import spinner from '/public/spinner.svg';
 import { formatAddress } from 'utils/helps';
 
 type PhantomEvent = 'disconnect' | 'connect';
 interface PhantomProvider {
-  publicKey: PublicKey | null;
-  isConnected: boolean | null;
+  publicKey: PublicKey;
+  secretKey: any;
+  isConnected: boolean;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
   signAndSendTransaction: (
@@ -28,7 +31,6 @@ interface PhantomProvider {
   connect: (opts?: any) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
-  // request: (method: PhantomRequestMethod, params: any) => Promise<unknown>;
 }
 
 const SolanaWeb3Page: NextPage = () => {
@@ -108,6 +110,41 @@ const SolanaWeb3Page: NextPage = () => {
     }
   };
 
+  const handleSendCoin = async () => {
+    if (account) {
+      const connection = new Connection(clusterApiUrl('devnet'));
+      const recipientAddress = new PublicKey(process.env.NEXT_PUBLIC_TO_WALLET_ADDRESS ?? '');
+
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: account.publicKey,
+          toPubkey: recipientAddress,
+          lamports: LAMPORTS_PER_SOL,
+        }),
+      );
+
+      // Setting the variables for the transaction
+      transaction.feePayer = account.publicKey;
+      const blockhashObj = await connection.getRecentBlockhash();
+      transaction.recentBlockhash = blockhashObj.blockhash;
+
+      // Transaction constructor initialized successfully
+      if (transaction) {
+        console.log('Txn created successfully');
+      }
+
+      // Request creator to sign the transaction (allow the transaction)
+      const signed = await account.signTransaction(transaction);
+      // The signature is generated
+      const signature = await connection.sendRawTransaction(signed.serialize());
+      // Confirm whether the transaction went through or not
+      await connection.confirmTransaction(signature);
+
+      //Signature or the txn hash
+      console.log('Signature: ', signature);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -132,6 +169,11 @@ const SolanaWeb3Page: NextPage = () => {
                 {isLoading && (
                   <Image src={spinner} className={styles.loader} width={15} height={15} alt="" />
                 )}
+              </Button>
+            </pre>
+            <pre>
+              <Button className={styles.btnSend} onClick={handleSendCoin}>
+                Send
               </Button>
             </pre>
             <Button
