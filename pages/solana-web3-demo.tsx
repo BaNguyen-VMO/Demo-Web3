@@ -132,6 +132,7 @@ const SolanaWeb3Page: NextPage = () => {
 
       // Transaction constructor initialized successfully
       if (transaction) {
+        alert('Txn created successfully');
         console.log('Txn created successfully');
       }
 
@@ -144,6 +145,7 @@ const SolanaWeb3Page: NextPage = () => {
 
       //Signature or the txn hash
       console.log('Signature: ', signature);
+      alert(`Signature: ${signature}`);
     }
   };
 
