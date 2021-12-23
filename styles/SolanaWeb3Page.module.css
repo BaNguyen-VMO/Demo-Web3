@@ -11,6 +11,10 @@
   left: 4px;
 }
 
+.inputAccountRecipient {
+  margin-right: 12px;
+}
+
 .btnSend {
   background: #f1c40f;
 }

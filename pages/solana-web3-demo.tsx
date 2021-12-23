@@ -3,7 +3,7 @@ import type { NextPage } from 'next';
 import Head from 'next/head';
 import Image from 'next/image';
 import styles from '../styles/SolanaWeb3Page.module.css';
-import { Button } from 'components';
+import { Button, Input } from 'components';
 import {
   Connection,
   clusterApiUrl,
@@ -38,6 +38,8 @@ const SolanaWeb3Page: NextPage = () => {
   const [provider, setProvider] = useState<PhantomProvider | undefined>(undefined);
   const [balanceOfAccount, setBalanceOfAccount] = useState<number | undefined>(0);
   const [isLoading, setLoading] = useState(false);
+
+  const [recipientAddress, setRecipientAddress] = useState('');
 
   useEffect(() => {
     const getProvider = (): PhantomProvider | undefined => {
@@ -113,12 +115,12 @@ const SolanaWeb3Page: NextPage = () => {
   const handleSendCoin = async () => {
     if (account) {
       const connection = new Connection(clusterApiUrl('devnet'));
-      const recipientAddress = new PublicKey(process.env.NEXT_PUBLIC_TO_WALLET_ADDRESS ?? '');
+      const recipientAccountAddress = new PublicKey(recipientAddress);
 
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: account.publicKey,
-          toPubkey: recipientAddress,
+          toPubkey: recipientAccountAddress,
           lamports: LAMPORTS_PER_SOL,
         }),
       );
@@ -155,11 +157,13 @@ const SolanaWeb3Page: NextPage = () => {
           <Button onClick={connectToWallet}>Connect Wallet</Button>
         ) : (
           <div className={styles.center}>
-            <p>Public key</p>
-            <p>{account.publicKey && formatAddress(account.publicKey.toBase58())}</p>
-            <br />
-            <p>Balance</p>
-            <p>{balanceOfAccount} SOL</p>
+            <p>
+              <b>Account Address: </b>
+              {account.publicKey && formatAddress(account.publicKey.toBase58())}
+            </p>
+            <p>
+              <b>Balance: </b> {balanceOfAccount} SOL
+            </p>
             <br />
             <pre>
               <Button
@@ -172,6 +176,13 @@ const SolanaWeb3Page: NextPage = () => {
               </Button>
             </pre>
             <pre>
+              <p>After enter recipient address, change wallet which you wanna send</p>
+              <Input
+                className={styles.inputAccountRecipient}
+                placeholder="Account Recipient..."
+                value={recipientAddress}
+                onChange={(e) => setRecipientAddress(e.target.value)}
+              />
               <Button className={styles.btnSend} onClick={handleSendCoin}>
                 Send
               </Button>

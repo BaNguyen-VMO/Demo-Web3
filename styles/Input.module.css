@@ -1,0 +1,15 @@
+.input__base {
+  border-radius: 5px;
+  border: 1px solid #bdc3c7;
+  padding: 8px 12px;
+  transition: border 0.3s;
+}
+
+.input__base:hover {
+  border: 1px solid #2980b9;
+}
+
+.input__base:focus {
+  outline: none;
+  border: 1px solid #2980b9;
+}

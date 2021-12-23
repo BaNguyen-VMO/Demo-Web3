@@ -6,5 +6,6 @@ export const getLibrary: GetLibrary = (provider) => {
 };
 
 export const formatAddress = (address: string, char = 4) => {
+  if (address.length <= 8) return;
   return `${address.substring(0, char)}...${address.substring(address.length - char)}`;
 };
